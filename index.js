@@ -41,7 +41,7 @@ async function run() {
       const query = { userEmail: userEmail };
       const user = await usersCollection.findOne(query);
       let admin = false;
-      if(user){
+      if (user) {
         admin = user?.userType === 'Admin'
       }
       res.send({ admin })
@@ -70,7 +70,8 @@ async function run() {
     // deliveryMen
 
     app.get("/deliveryMen", async (req, res) => {
-      const result = await deliveryMenCollection.find().toArray()
+      const cursor = deliveryMenCollection.find().sort({ averageReview: -1 });
+      const result = await cursor.toArray();
       res.send(result)
       console.log(result);
     })
