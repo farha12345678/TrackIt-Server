@@ -28,12 +28,61 @@ async function run() {
     await client.connect();
     const usersCollection = client.db("twelveDB").collection('users');
     const deliveryMenCollection = client.db("twelveDB").collection('deliveryMen');
+    const parcelCollection = client.db("twelveDB").collection('parcels');
+
+    // bookParcel
+
+    app.get('/parcel', async (req, res) => {
+      const cursor = parcelCollection.find()
+      const result = await cursor.toArray();
+
+      res.send(result)
+    })
+
+    app.put('/parcel', async (req, res) => {
+      const user = req.body
+      console.log(user);
+      const query = { userEmail: user?.userEmail }
+      
+      const isExist = await parcelCollection.findOne(query)
+      if (isExist) {
+        if (user.status === 'Pending') {
+          
+          const result = await parcelCollection.updateOne(query, {
+            $set: { status: user?.status },
+          })
+          return res.send(result)
+        } else {
+          
+          return res.send(isExist)
+        }
+      }
+      const result = await parcelCollection.updateOne(query, updateDoc, options)
+      res.send(result)
+    })
+    // add
+
+    app.post('/parcel', async (req, res) => {
+      const newParcel ={ ...req.body, status: 'Pending', bookingDate: new Date()};
+      console.log(newParcel);
+      const result = await parcelCollection.insertOne(newParcel)
+      res.send(result)
+    })
 
 
     // user
     app.get("/users", async (req, res) => {
       const result = await usersCollection.find().toArray()
       res.send(result)
+    })
+
+    app.get('/users/:userEmail', async (req, res) => {
+     
+      console.log('token owner info', req.user);
+      const result = await usersCollection.findOne({ userEmail: req.params.userEmail })
+      
+      res.send(result)
+
     })
 
     app.get("/users/admin/:userEmail", async (req, res) => {
@@ -45,23 +94,23 @@ async function run() {
         admin = user?.userType === 'Admin'
       }
       res.send({ admin })
-      console.log(query, admin);
+     
 
     })
 
     app.post("/users", async (req, res) => {
       const user = req.body;
-      console.log(user);
+     
       const query = { userEmail: user.userEmail }
       const existingUser = await usersCollection.findOne(query)
-      console.log({ existingUser });
+     
       if (existingUser) {
 
         return res.send({ message: 'User already exist', insertedId: null })
       }
 
       const result = await usersCollection.insertOne(user);
-      console.log(result);
+      
       res.send(result)
 
     })
@@ -73,7 +122,7 @@ async function run() {
       const cursor = deliveryMenCollection.find().sort({ averageReview: -1 });
       const result = await cursor.toArray();
       res.send(result)
-      console.log(result);
+
     })
 
 
