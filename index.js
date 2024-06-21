@@ -106,7 +106,19 @@ async function run() {
     })
 
 
-    // deliveryMan
+    app.patch('/users/admin/:id' , async(req,res)=> {
+      const id = req.params.id
+      const filter = {_id: new ObjectId(id)}
+      const updateData = req.body;
+      const updatedDoc = {
+        $set : {
+          userType: updateData.userType,
+        }
+      }
+      const result = await usersCollection.updateOne(filter, updatedDoc);
+      
+      res.send(result);
+    })
 
     
 
