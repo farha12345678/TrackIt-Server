@@ -39,39 +39,45 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/parcel/:email', async (req, res) => {
+    app.get('/parcels/:email', async (req, res) => {
 
-      const result = await parcelCollection.findOne({ email: req.params.email })
+      const result = await parcelCollection.find({ email: req.params.email }).toArray()
 
       res.send(result)
 
     })
 
-    app.get('/parcel/:deliveryManId', async(req,res)=> {
-      const deliveryManId = req.params.deliveryManId;
-      const query = { deliveryManId : new ObjectId(deliveryManId)}
-      const result = await parcelCollection.findOne(query)
-      console.log(result);
+    app.get('/my-parcel/:deliveryManEmail', async (req, res) => {
+      const result = await parcelCollection.find({ deliveryManEmail: req.params.deliveryManEmail }).toArray()
+     
       res.send(result)
-  })
+    })
 
     app.put('/parcel/:id', async (req, res) => {
       const { id } = req.params;
+      console.log(id);
       const updateData = req.body;
+      console.log('updateData',updateData);
       const options = { upsert: true }
       const query = { _id: new ObjectId(id) };
       const update = {
         $set: {
           status: updateData.status,
-          deliveryManId: updateData.deliveryManId,
-          approxDeliveryDate: updateData.approxDeliveryDate,
+                deliveryManId: updateData.deliveryManId,
+                approxDeliveryDate: updateData.approxDeliveryDate,
+                deliveryManEmail: updateData.deliveryManEmail
         },
       };
-
+      
       const result = await parcelCollection.updateOne(query, update, options);
+      
       res.send(result);
 
     });
+
+
+
+
 
 
 
@@ -99,6 +105,11 @@ async function run() {
 
     })
 
+
+    // deliveryMan
+
+    
+
     // app.get("/users/admin/:userEmail", async (req, res) => {
     //   const userEmail = req.params.userEmail;
     //   const query = { userEmail: userEmail };
@@ -112,41 +123,7 @@ async function run() {
 
     // })
 
-    app.post("/users", async (req, res) => {
-      const user = req.body;
-
-      const query = { userEmail: user.userEmail }
-      const existingUser = await usersCollection.findOne(query)
-
-      if (existingUser) {
-
-        return res.send({ message: 'User already exist', insertedId: null })
-      }
-
-      const result = await usersCollection.insertOne(user);
-
-      res.send(result)
-
-    })
-
-
-    // deliveryMen
-    app.get('/delivery-men', (req, res) => {
-      const cursor = usersCollection.find({ userType: 'Delivery Man' });
-      cursor.toArray((err, deliveryMen) => {
-        if (err) {
-          res.status(500).send({ message: 'Error fetching delivery men', error: err });
-        } else {
-          res.send(deliveryMen);
-        }
-        console.log(deliveryMen);
-      });
-    });
-
-
-   
-
-
+    
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
