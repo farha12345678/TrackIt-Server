@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express()
@@ -30,9 +31,36 @@ async function run() {
     const reviewCollection = client.db("twelveDB").collection('review');
     const parcelCollection = client.db("twelveDB").collection('parcels');
 
+
+    // jwt related api
+
+    app.post('/jwt', async (req, res) => {
+      const user = req.body
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: '1h'
+      })
+      res.send({ token })
+    })
+    // middleware
+    const verifyToken = (req, res, next) => {
+      console.log('inside verify token', req.headers.authorization);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: 'Forbidden access' })
+      }
+      const token = req.headers.authorization.split(' ')[1]
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: 'Forbidden access' })
+        }
+        req.decoded = decoded;
+        next()
+      })
+
+    }
     // bookParcel
 
-    app.get('/parcel', async (req, res) => {
+    app.get('/parcel', verifyToken, async (req, res) => {
+
       const cursor = parcelCollection.find()
       const result = await cursor.toArray();
 
@@ -92,8 +120,10 @@ async function run() {
 
     // user
     app.get("/users", async (req, res) => {
+
       const userType = req.query.userType;
       const query = userType ? { userType } : {};
+
       const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
@@ -104,12 +134,12 @@ async function run() {
       res.send(result)
 
     })
-    app.post('/users', async (req, res)=>{
+    app.post('/users', async (req, res) => {
       const newUser = req.body;
       console.log(newUser);
       const result = await usersCollection.insertOne(newUser)
       res.send(result)
-  })
+    })
 
 
     app.patch('/users/admin/:id', async (req, res) => {
@@ -159,7 +189,7 @@ async function run() {
     // app.get("/users/admin/:userEmail", async (req, res) => {
     //   const userEmail = req.params.userEmail;
 
-    
+
     //   if (user) {
     //     admin = user?.userType === 'Admin'
     //   }
