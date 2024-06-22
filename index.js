@@ -133,7 +133,7 @@ async function run() {
 
     app.get('/my-review/:email', async (req, res) => {
 
-      const result = await reviewCollection.find({ email: req.params.email }).toArray()
+      const result = await reviewCollection.find({ deliveryManEmail: req.params.email }).toArray()
 
       res.send(result)
 
