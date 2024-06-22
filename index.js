@@ -27,7 +27,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     const usersCollection = client.db("twelveDB").collection('users');
-
+    const reviewCollection = client.db("twelveDB").collection('review');
     const parcelCollection = client.db("twelveDB").collection('parcels');
 
     // bookParcel
@@ -49,7 +49,7 @@ async function run() {
 
     app.get('/my-parcel/:deliveryManEmail', async (req, res) => {
       const result = await parcelCollection.find({ deliveryManEmail: req.params.deliveryManEmail }).toArray()
-     
+
       res.send(result)
     })
 
@@ -57,20 +57,20 @@ async function run() {
       const { id } = req.params;
       console.log(id);
       const updateData = req.body;
-      console.log('updateData',updateData);
+      console.log('updateData', updateData);
       const options = { upsert: true }
       const query = { _id: new ObjectId(id) };
       const update = {
         $set: {
           status: updateData.status,
-                deliveryManId: updateData.deliveryManId,
-                approxDeliveryDate: updateData.approxDeliveryDate,
-                deliveryManEmail: updateData.deliveryManEmail
+          deliveryManId: updateData.deliveryManId,
+          approxDeliveryDate: updateData.approxDeliveryDate,
+          deliveryManEmail: updateData.deliveryManEmail
         },
       };
-      
+
       const result = await parcelCollection.updateOne(query, update, options);
-      
+
       res.send(result);
 
     });
@@ -106,21 +106,40 @@ async function run() {
     })
 
 
-    app.patch('/users/admin/:id' , async(req,res)=> {
+    app.patch('/users/admin/:id', async (req, res) => {
       const id = req.params.id
-      const filter = {_id: new ObjectId(id)}
+      const filter = { _id: new ObjectId(id) }
       const updateData = req.body;
       const updatedDoc = {
-        $set : {
+        $set: {
           userType: updateData.userType,
         }
       }
       const result = await usersCollection.updateOne(filter, updatedDoc);
-      
+
       res.send(result);
     })
 
-    
+    // review
+
+    app.get('/review', async (req, res) => {
+      try {
+        const topReviews = await reviewCollection.find().sort({ rating: -1 }).toArray();
+        res.send(topReviews);
+      } catch (error) {
+        res.status(500).send({ message: "Error retrieving top-rated reviews", error });
+      }
+    });
+
+    app.post('/review', async (req, res) => {
+      const review = req.body;
+      console.log(review);
+      const result = await reviewCollection.insertOne(review)
+      res.send(result)
+    })
+
+
+
 
     // app.get("/users/admin/:userEmail", async (req, res) => {
     //   const userEmail = req.params.userEmail;
@@ -135,7 +154,7 @@ async function run() {
 
     // })
 
-    
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
