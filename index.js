@@ -104,6 +104,12 @@ async function run() {
       res.send(result)
 
     })
+    app.post('/users', async (req, res)=>{
+      const newUser = req.body;
+      console.log(newUser);
+      const result = await usersCollection.insertOne(newUser)
+      res.send(result)
+  })
 
 
     app.patch('/users/admin/:id', async (req, res) => {
@@ -141,7 +147,7 @@ async function run() {
 
 
     app.post('/review', async (req, res) => {
-      const review = req.body;
+      const review = { ...req.body, reviewGivingDate: new Date() };
       console.log(review);
       const result = await reviewCollection.insertOne(review)
       res.send(result)
@@ -152,7 +158,7 @@ async function run() {
 
     // app.get("/users/admin/:userEmail", async (req, res) => {
     //   const userEmail = req.params.userEmail;
-    
+
     //   const user = await usersCollection.findOne(query);
     //   let admin = false;
     //   if (user) {
