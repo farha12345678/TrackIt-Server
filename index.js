@@ -143,7 +143,7 @@ async function run() {
 
     // app.get("/users/admin/:userEmail", async (req, res) => {
     //   const userEmail = req.params.userEmail;
-    //   const query = { userEmail: userEmail };
+    
     //   const user = await usersCollection.findOne(query);
     //   let admin = false;
     //   if (user) {
